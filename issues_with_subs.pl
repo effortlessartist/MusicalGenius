@@ -4,16 +4,16 @@ use MIDI::Simple;
 use MusicGen::Scale;
 use strict;
 use warnings;
+use Data::Dumper;
 
-new_score;
-patch_change 1, 33;
-patch_change 2, 46;
-set_tempo 600000;
-my @subs = (\&keys, \&piano, \&bass, \&low_wood_block, \&low_bongo, \&high_bongo, \&snare, \&kick );
-foreach ( 1 .. 64 ) { synch(@subs) }
-write_score("test.mid");
-system("timidity -A100 -EF reverb=g,100 test.mid");
-exit;
+#new_score;
+#patch_change 1, 33;
+#patch_change 2, 46; set_tempo 600000;
+#my @subs = (\&keys, \&piano, \&bass, \&low_wood_block, \&low_bongo, \&high_bongo, \&snare, \&kick );
+#foreach ( 1 .. 64 ) { synch(@subs) }
+#write_score("test.mid");
+#system("timidity -A100 -EF reverb=g,100 test.mid");
+#exit;
 
 sub kick {
     my $it = shift;
@@ -28,7 +28,7 @@ sub snare {
 
 sub low_wood_block {
    my $it = shift;
-   my $pattern = &pattern_gen(1); 
+   my $pattern = pattern_gen(1); 
    $it->noop(qw(c9 mf n77 sn));
    foreach (split('', $pattern)) {
        if ($_ eq '1') { $it->n }
@@ -38,7 +38,7 @@ sub low_wood_block {
 
 sub high_bongo {
     my $it = shift;
-    my $pattern = &pattern_gen(10);
+    my $pattern = pattern_gen(10);
     $it->noop(qw(c9 f n60 sn));
     foreach (split('', $pattern)) {
         if ($_ eq '1') { $it->n }
@@ -48,7 +48,7 @@ sub high_bongo {
 
 sub low_bongo {
     my $it = shift;
-    my $pattern = &pattern_gen(5);
+    my $pattern = pattern_gen(5);
     $it->noop(qw(c9 f n61 sn));
     foreach (split('', $pattern)) {
         if ($_ eq '1') { $it->n }
@@ -61,9 +61,10 @@ my @scale = MusicGen::Scale::scale_gen('G','hminor');
 
 sub bass{
     my $it = shift;
-    my $pattern = &pattern_gen(8,4);
+    my $pattern = pattern_gen(8,4);
     $it->noop(qw(c1 f o2 qn));
     foreach (split('', $pattern)) {
+        print Dumper \@scale;
         if ($_ eq '1') { $it->n($scale[0])}
         elsif ( $_ eq '2') { $it->n($scale[1])}
         elsif ( $_ eq '3') { $it->n($scale[2])}
@@ -77,7 +78,7 @@ sub bass{
 
 sub keys {
     my $it = shift;
-    my $pattern = &pattern_gen(8,8);
+    my $pattern = pattern_gen(8,8);
    # my @scale = MusicGen::Scale::scale_gen('G','hminor');
     $it->noop(qw(c2 f o4 en));
     foreach (split('', $pattern)) {
@@ -94,7 +95,7 @@ sub keys {
 
 sub piano {
     my $it = shift;
-    my $pattern = &pattern_gen(10);
+    my $pattern = pattern_gen(10);
    # my @scale = MusicGen::Scale::scale_gen('G','hminor');
     $it->noop(qw(c3 mezzo o4 sn));
     foreach (split('', $pattern)) {
@@ -122,3 +123,4 @@ sub pattern_gen {
     }
     return $str;
 }
+
