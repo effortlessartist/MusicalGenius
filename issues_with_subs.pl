@@ -6,14 +6,8 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-#new_score;
-#patch_change 1, 33;
-#patch_change 2, 46; set_tempo 600000;
-#my @subs = (\&keys, \&piano, \&bass, \&low_wood_block, \&low_bongo, \&high_bongo, \&snare, \&kick );
-#foreach ( 1 .. 64 ) { synch(@subs) }
-#write_score("test.mid");
-#system("timidity -A100 -EF reverb=g,100 test.mid");
-#exit;
+
+my @scale = MusicGen::Scale::scale_gen('D','hminor');
 
 sub kick {
     my $it = shift;
@@ -56,15 +50,13 @@ sub low_bongo {
     }
 }
 
-{
-my @scale = MusicGen::Scale::scale_gen('G','hminor');
+
 
 sub bass{
     my $it = shift;
     my $pattern = pattern_gen(8,4);
     $it->noop(qw(c1 f o2 qn));
     foreach (split('', $pattern)) {
-        print Dumper \@scale;
         if ($_ eq '1') { $it->n($scale[0])}
         elsif ( $_ eq '2') { $it->n($scale[1])}
         elsif ( $_ eq '3') { $it->n($scale[2])}
@@ -79,7 +71,6 @@ sub bass{
 sub keys {
     my $it = shift;
     my $pattern = pattern_gen(8,8);
-   # my @scale = MusicGen::Scale::scale_gen('G','hminor');
     $it->noop(qw(c2 f o4 en));
     foreach (split('', $pattern)) {
         if ($_ eq '1') { $it->n($scale[0])}
@@ -96,20 +87,17 @@ sub keys {
 sub piano {
     my $it = shift;
     my $pattern = pattern_gen(10);
-   # my @scale = MusicGen::Scale::scale_gen('G','hminor');
     $it->noop(qw(c3 mezzo o4 sn));
-    foreach (split('', $pattern)) {
-        if ($_ eq '1') { $it->n($scale[0])}
-        elsif ( $_ eq '2') { $it->n($scale[1])}
-        elsif ( $_ eq '3') { $it->n($scale[2])}
-        elsif ( $_ eq '4') { $it->n($scale[3])}
-        elsif ( $_ eq '5') { $it->n($scale[4])}
-        elsif ( $_ eq '6') { $it->n($scale[5])}
-        elsif ( $_ eq '7') { $it->n($scale[6])}
-        else { $it->r }
+    for my $note (notes($pattern, @scale)) { 
+        if (defined $note) {
+            $it->n($note) 
+        } 
+        else { 
+            $it->r 
+        }
     }
 }
-}
+
 sub pattern_gen {
     my ($frequency, $notes_per_measure) = @_;
     if ( $frequency < 2 ) { $frequency = 2 }else{ $frequency = $_[0] }
@@ -123,4 +111,20 @@ sub pattern_gen {
     }
     return $str;
 }
+
+sub notes { 
+  my ($pattern, @scale) = @_; 
+ 
+  return map { $_ < @scale ? $scale[$_] : undef } split //, $pattern;
+} 
+
+
+new_score;
+patch_change 1, 33;
+patch_change 2, 46; set_tempo 600000;
+my @subs = ( \&keys, \&bass, \&piano, \&low_wood_block, \&low_bongo, \&high_bongo, \&snare, \&kick );
+foreach ( 1 .. 64 ) { synch(@subs) }
+write_score("test.mid");
+system("timidity -A100 -EF reverb=g,100 test.mid");
+
 
