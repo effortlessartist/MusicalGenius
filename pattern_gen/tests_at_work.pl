@@ -81,7 +81,7 @@ sub keys {
         elsif ( $_ eq '5') { $it->n(G4)}
         elsif ( $_ eq '6') { $it->n(A4)}
         elsif ( $_ eq '7') { $it->n(B4)}
-        else { $it->r }
+        else { $it->n(C4) }
     }
 }
 

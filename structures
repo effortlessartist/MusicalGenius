@@ -1,0 +1,4 @@
+Musician:  #:Object: 
+    Volume #:Attr: level of presence in overall piece
+    Role   #:Attr: Rhythm, chords, Melody, Harmony, Perc
+     
