@@ -9,13 +9,17 @@ use Data::Dumper;
 
 my @scale = MusicGen::Scale::scale_gen('D','hminor');
 
+my $measure;
+
 sub kick {
     my $it = shift;
+    return if $measure % 4 < 2;
     $it->n(qw(c9 ff n45 n43 n35 n36 hn)); $it->n(qw(ff hn));
 }
 
 sub snare {
     my $it = shift;
+    return if $measure % 4 < 2;
     $it->r("hn");
     $it->n(qw(c9 ff n38 hn)); 
 }
@@ -118,11 +122,16 @@ sub notes {
   return map { $_ < @scale ? $scale[$_] : undef } split //, $pattern;
 } 
 
+sub measure_counter {
+    my $it = shift;
+    $it->r("wn");
+    ++$measure;
+}
 
 new_score;
 patch_change 1, 33;
 patch_change 2, 46; set_tempo 600000;
-my @subs = ( \&keys, \&bass, \&piano, \&low_wood_block, \&low_bongo, \&high_bongo, \&snare, \&kick );
+my @subs = ( \&measure_counter, \&keys, \&bass, \&piano, \&low_wood_block, \&low_bongo, \&high_bongo, \&snare, \&kick );
 foreach ( 1 .. 64 ) { synch(@subs) }
 write_score("test.mid");
 system("timidity -A100 -EF reverb=g,100 test.mid");
