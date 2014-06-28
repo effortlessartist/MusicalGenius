@@ -11,26 +11,44 @@ my @scale = MusicGen::Scale::scale_gen('D','hminor');
 
 my $measure;
 
+my $on_off;
+
 sub kick {
     my $it = shift;
-    return if $measure % 4 < 2;
-    $it->n(qw(c9 ff n45 n43 n35 n36 hn)); $it->n(qw(ff hn));
+    my $pattern = pattern_gen(2,8); 
+    my $count = 0;
+    $it->noop(qw(c9 fff n45 n43 n35 n36 en));
+    foreach (split //, $pattern){
+        if ($count == 0){$it->n}
+        elsif ($count == 4){$it->r}
+        elsif ($_ == 1){$it->n}else{$it->r}
+        ++$count;
+    }
 }
 
 sub snare {
     my $it = shift;
-    return if $measure % 4 < 2;
-    $it->r("hn");
-    $it->n(qw(c9 ff n38 hn)); 
+    my $pattern = pattern_gen(4); 
+    my $count = 0;
+    $it->noop(qw(c9 f n38 sn)); 
+    foreach (split //, $pattern) {
+        if ($count == 0){$it->r}
+        elsif ($count == 8 and $_ > 0){$it->n("f")}
+        elsif ($_ == 1) {$it->n("p")}else{$it->r}
+        ++$count;
+    }
 }
 
 sub low_wood_block {
    my $it = shift;
-   my $pattern = pattern_gen(1); 
-   $it->noop(qw(c9 mf n77 sn));
-   foreach (split('', $pattern)) {
-       if ($_ eq '1') { $it->n }
+   my $pattern = pattern_gen(4); 
+   my $count = 0;
+   $it->noop(qw(c9 n42 sn));
+   foreach (split //, $pattern) {
+       if ( $count % 2 == 0 and $_ eq '1') { $it->n("m") }
+       elsif ( $count % 2 == 1 and $_ eq '1') { $it->n("p") }
        else { $it->r }
+       ++$count;
    }   
 }
 
@@ -58,47 +76,56 @@ sub low_bongo {
 
 sub bass{
     my $it = shift;
+    $on_off = int(rand(4));
+    return if $measure % 4 == $on_off; 
     my $pattern = pattern_gen(8,4);
     $it->noop(qw(c1 f o2 qn));
-    foreach (split('', $pattern)) {
-        if ($_ eq '1') { $it->n($scale[0])}
-        elsif ( $_ eq '2') { $it->n($scale[1])}
-        elsif ( $_ eq '3') { $it->n($scale[2])}
-        elsif ( $_ eq '4') { $it->n($scale[3])}
-        elsif ( $_ eq '5') { $it->n($scale[4])}
-        elsif ( $_ eq '6') { $it->n($scale[5])}
-        elsif ( $_ eq '7') { $it->n($scale[6])}
-        else { $it->r }
+    for my $note (notes($pattern, @scale)) { 
+        if (defined $note) {
+            $it->channel_after_touch(1, int(rand(127)));
+            $it->n($note); 
+        } 
+        else { 
+            $it->r 
+        }
     }
 }
 
 sub keys {
     my $it = shift;
+    $on_off = int(rand(4));
+    return if $measure % 4 == $on_off;
     my $pattern = pattern_gen(8,8);
     $it->noop(qw(c2 f o4 en));
-    foreach (split('', $pattern)) {
-        if ($_ eq '1') { $it->n($scale[0])}
-        elsif ( $_ eq '2') { $it->n($scale[1])}
-        elsif ( $_ eq '3') { $it->n($scale[2])}
-        elsif ( $_ eq '4') { $it->n($scale[3])}
-        elsif ( $_ eq '5') { $it->n($scale[4])}
-        elsif ( $_ eq '6') { $it->n($scale[5])}
-        elsif ( $_ eq '7') { $it->n($scale[6])}
-        else { $it->r }
+    for my $note (notes($pattern, @scale)) { 
+        if (defined $note) {
+            $it->channel_after_touch(2,int(rand(127)));
+            $it->control_change(2, 10, (int(rand(15)) + 45));
+            $it->n($note, "V".(int(rand(43)) + 64)); 
+        } 
+        else { 
+            $it->r 
+        }
     }
 }
 
 sub piano {
     my $it = shift;
+    $on_off = int(rand(4));
+    return if $measure % 4 == $on_off;
     my $pattern = pattern_gen(10);
-    $it->noop(qw(c3 mezzo o4 sn));
+    my $count = 0;
+    $it->noop(qw(c3 mezzo o5 sn));
     for my $note (notes($pattern, @scale)) { 
-        if (defined $note) {
-            $it->n($note) 
+        if (defined $note and $count % 2 == 1) {
+            $it->channel_after_touch(3, int(rand(127)));
+            $it->control_change(3, 10, (int(rand(10)) + 74)); 
+            $it->n($note, "V".(int(rand(40)) + 44)); 
         } 
         else { 
             $it->r 
         }
+        ++$count;
     }
 }
 
@@ -128,9 +155,12 @@ sub measure_counter {
     ++$measure;
 }
 
+
 new_score;
-patch_change 1, 33;
-patch_change 2, 46; set_tempo 600000;
+patch_change 1, 33; control_change 1, 7, 127;
+patch_change 2, 46; control_change 2, 64, 64; 
+control_change 3, 64, 64;
+set_tempo 900000;
 my @subs = ( \&measure_counter, \&keys, \&bass, \&piano, \&low_wood_block, \&low_bongo, \&high_bongo, \&snare, \&kick );
 foreach ( 1 .. 64 ) { synch(@subs) }
 write_score("test.mid");
