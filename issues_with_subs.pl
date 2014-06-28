@@ -43,7 +43,7 @@ sub low_wood_block {
    my $it = shift;
    my $pattern = pattern_gen(4); 
    my $count = 0;
-   $it->noop(qw(c9 n42 sn));
+   $it->noop(qw(c9 n77 sn));
    foreach (split //, $pattern) {
        if ( $count % 2 == 0 and $_ eq '1') { $it->n("m") }
        elsif ( $count % 2 == 1 and $_ eq '1') { $it->n("p") }
@@ -76,7 +76,7 @@ sub low_bongo {
 
 sub bass{
     my $it = shift;
-    $on_off = int(rand(4));
+    $on_off = int(rand(6));
     return if $measure % 4 == $on_off; 
     my $pattern = pattern_gen(8,4);
     $it->noop(qw(c1 f o2 qn));
@@ -93,7 +93,7 @@ sub bass{
 
 sub keys {
     my $it = shift;
-    $on_off = int(rand(4));
+    $on_off = int(rand(5));
     return if $measure % 4 == $on_off;
     my $pattern = pattern_gen(8,8);
     $it->noop(qw(c2 f o4 en));
@@ -111,7 +111,7 @@ sub keys {
 
 sub piano {
     my $it = shift;
-    $on_off = int(rand(4));
+    $on_off = int(rand(5));
     return if $measure % 4 == $on_off;
     my $pattern = pattern_gen(10);
     my $count = 0;
@@ -122,6 +122,16 @@ sub piano {
             $it->control_change(3, 10, (int(rand(10)) + 74)); 
             $it->n($note, "V".(int(rand(40)) + 44)); 
         } 
+        elsif (defined $note and $count % 2 == 0) {
+            my $coin = int(rand(2));
+            if ($coin == 0){
+                $it->channel_after_touch(3, int(rand(127)));
+                $it->control_change(3, 10, (int(rand(10)) + 74));
+                $it->n($note, "V".(int(rand(20)) + 24));
+            }else{
+                $it->r
+            }
+        }
         else { 
             $it->r 
         }
@@ -161,7 +171,17 @@ patch_change 1, 33; control_change 1, 7, 127;
 patch_change 2, 46; control_change 2, 64, 64; 
 control_change 3, 64, 64;
 set_tempo 900000;
-my @subs = ( \&measure_counter, \&keys, \&bass, \&piano, \&low_wood_block, \&low_bongo, \&high_bongo, \&snare, \&kick );
+my @subs = ( 
+    \&measure_counter, 
+    \&keys, 
+    \&bass, 
+    \&piano, 
+    \&low_wood_block, 
+    \&low_bongo, 
+    \&high_bongo, 
+    \&snare, 
+    \&kick, 
+);
 foreach ( 1 .. 64 ) { synch(@subs) }
 write_score("test.mid");
 system("timidity -A100 -EF reverb=g,100 test.mid");
