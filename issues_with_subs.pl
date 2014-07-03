@@ -12,6 +12,7 @@ my @scale = MusicGen::Scale::scale_gen('D','hminor');
 my $measure;
 
 my $on_off;
+my $big_num = 800000;
 
 sub kick {
     my $it = shift;
@@ -170,7 +171,7 @@ new_score;
 patch_change 1, 33; control_change 1, 7, 127;
 patch_change 2, 46; control_change 2, 64, 64; 
 control_change 3, 64, 64;
-set_tempo 900000;
+set_tempo $big_num; 
 my @subs = ( 
     \&measure_counter, 
     \&keys, 
@@ -182,7 +183,20 @@ my @subs = (
     \&snare, 
     \&kick, 
 );
-foreach ( 1 .. 64 ) { synch(@subs) }
+foreach ( 1 .. 16 ) { 
+    synch(@subs); 
+    my $pattern = pattern_gen(2,1);
+    my $coin = int(rand(2));
+    foreach (split //, $pattern){
+        set_tempo $big_num; 
+        if ($_ eq '0' and $measure % 4 == 0){
+            $big_num = $big_num - int(rand(10000));
+        }elsif($_ eq '1' and $measure % 4 == 0) {
+            $big_num = $big_num + int(rand(10000));
+        }
+        print $big_num." "; 
+    }
+}
 write_score("test.mid");
 system("timidity -A100 -EF reverb=g,100 test.mid");
 
